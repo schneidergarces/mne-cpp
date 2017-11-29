@@ -148,13 +148,13 @@ int main()
 	int i;
 
 	for ( i = 0; i<n_sample; i++) {
-		arr1[0]=recvbuf[28+i*3];
-		arr1[1]=recvbuf[29+i*3];
-		arr1[2]=recvbuf[30+i*3];
+		arr1[0]=recvbuf[28+i*6];
+		arr1[1]=recvbuf[29+i*6];
+		arr1[2]=recvbuf[30+i*6];
 
-		arr2[0] = recvbuf[31 + i * 3];
-		arr2[1] = recvbuf[32 + i * 3];
-		arr2[2] = recvbuf[33 + i * 3];
+		arr2[0] = recvbuf[31 + i * 6];
+		arr2[1] = recvbuf[32 + i * 6];
+		arr2[2] = recvbuf[33 + i * 6];
 
 		(int)result1[i] = Sample32bit(arr1);
 
