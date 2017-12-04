@@ -1,14 +1,14 @@
 //=============================================================================================================
 /**
-* @file     main.cpp
-* @author   ;
-*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>
+* @file     server.h
+* @author   Ricky Tjen <ricky270@student.sgu.ac.id>;
+*           Matti Hamalainen <msh@nmr.mgh.harvard.edu>;
 * @version  1.0
-* @date     December, 2017
+* @date     April, 2016
 *
 * @section  LICENSE
 *
-* Copyright (C) 2012, and Matti Hamalainen. All rights reserved.
+* Copyright (C) 2016, Ricky Tjen and Matti Hamalainen. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that
 * the following conditions are met:
@@ -29,17 +29,29 @@
 * POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* @brief     Example of the FiffIO interface class
+* @brief    Bar class declaration
 *
 */
 
+#ifndef SERVER_H
+#define SERVER_H
 
 //*************************************************************************************************************
 //=============================================================================================================
 // INCLUDES
 //=============================================================================================================
 
-#include "server.h"
+
+//*************************************************************************************************************
+//=============================================================================================================
+// QT INCLUDES
+//=============================================================================================================
+
+#include <QUdpSocket>
+#include <QNetworkDatagram>
+#include <QObject>
+#include <QDebug>
+#include <QDataStream>
 
 
 //*************************************************************************************************************
@@ -52,41 +64,83 @@
 
 //*************************************************************************************************************
 //=============================================================================================================
-// QT INCLUDES
+// FORWARD DECLARATIONS
 //=============================================================================================================
 
-#include <QtCore/QCoreApplication>
 
-
-//*************************************************************************************************************
-//=============================================================================================================
-// USED NAMESPACES
-//=============================================================================================================
-
-using namespace Eigen;
-
-
-//*************************************************************************************************************
-//=============================================================================================================
-// MAIN
 //=============================================================================================================
 /**
-* The function main marks the entry point of the program.
-* By default, main has the storage class extern.
+* Histogram display using Qtcharts, similar to matlab bar graph
 *
-* @param [in] argc (argument count) is an integer that indicates how many arguments were entered on the command line when the program was started.
-* @param [in] argv (argument vector) is an array of pointers to arrays of character objects. The array objects are null-terminated strings, representing the arguments that were entered on the command line when the program was started.
-* @return the value that was set to exit() (which is 0 if exit() is called via quit()).
+* @brief Bar class for histogram display using QtCharts
 */
-int main(int argc, char *argv[])
+class Server : public QObject
 {
-    QCoreApplication a(argc, argv);
+    Q_OBJECT
 
-    Server *pServer = new Server ();
-    pServer->initSocket();
+public:
+    Server(QObject* parent = Q_NULLPTR)
+        :QObject(parent)
+    {}
 
-    return a.exec();
+    void initSocket()
+    {
+        m_pUdpSocket = new QUdpSocket(this);
+        m_pUdpSocket->bind(QHostAddress::AnyIPv4, 50000);
 
-}
+        connect(m_pUdpSocket, &QUdpSocket::readyRead,
+                this, &Server::readPendingDatagrams);
+    }
+
+    void readPendingDatagrams()
+    {
+        while (m_pUdpSocket->hasPendingDatagrams()) {
+            QNetworkDatagram datagram = m_pUdpSocket->receiveDatagram();
+            qDebug() << "Datagram on port 50000 from IP "<<datagram.senderAddress();
+            processDatagram(datagram);
+        }
+    }
+
+    void processDatagram(QNetworkDatagram datagram)
+    {
+        QByteArray data = datagram.data();
+
+        qDebug()<<"Data size "<<data.size();
 
 
+
+        QDataStream reader(data);
+
+        char* raw = new char(2);
+        int length = 2;
+        reader.readRawData(raw, length);
+        qDebug()<<"First Block uint8 "<<(quint8)raw;
+        qDebug()<<"First Block  "<< raw;
+
+
+//        qDebug()<<"Block int8 0"<<testVal;
+//        QDataStream::readBytes(data,1) >> testVal;
+//        qDebug()<<"Block int8 1"<<testVal;
+//        QDataStream::readBytes(data,1) >> testVal;
+//        qDebug()<<"Block int8 2"<<testVal;
+//        QDataStream::readBytes(data,1) >> testVal;
+//        qDebug()<<"Block int8 3"<<testVal;
+//        qint32 testValA;
+//        QDataStream::readBytes(data.data(),4) >> testValA;
+//        qDebug()<<"Block int32 0"<<testValA;
+
+
+        //qDebug()<<"testVal"<<testVal;
+
+        //Eigen::MatrixXd matData = Eigen::MatrixXd(numberSensors, numberSamples);
+
+
+    }
+
+protected:
+    QUdpSocket* m_pUdpSocket;
+};
+
+// NAMESPACE
+
+#endif // SERVER_H
